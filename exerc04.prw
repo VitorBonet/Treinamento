@@ -95,10 +95,10 @@ Function EXERC04()
 	oBrowseRight:Activate()
 
 	// Duplo click no browse Pai
-	oBrowseUp:bldblclick := {|| fAlerCon( 'ZB5', ZB5->ZB5_CODTUR)}
+	oBrowseUp:bldblclick := {|| AlertCon( 'ZB5', ZB5->ZB5_CODTUR)}
 
 	// Duplo click no browse Filho
-	oBrowseLeft:bldblclick := {|| fAlerCon('ZB6', ZB6->ZB6_CODTUR, ZB6->ZB6_RA)}
+	oBrowseLeft:bldblclick := {|| AlertCon('ZB6', ZB6->ZB6_CODTUR, ZB6->ZB6_RA)}
 
 	Activate MsDialog oDlgPrinc Center
 
@@ -114,7 +114,7 @@ Static Function MenuDef()
 	aAdd( aRotina, { 'Excluir'   , 'VIEWDEF.EXERC04', 0, 5, 0, NIL } )
 	aAdd( aRotina, { 'Imprimir'  , 'VIEWDEF.EXERC04', 0, 8, 0, NIL } )
 	aAdd( aRotina, { 'Copiar'    , 'VIEWDEF.EXERC04', 0, 9, 0, NIL } )
-	aAdd( aRotina, { 'Processar' , 'fAlerCon'		, 0, 9, 0, NIL } )
+	aAdd( aRotina, { 'Processar' , 'AlertCon'		, 0, 9, 0, NIL } )
 
 Return aRotina
 
@@ -199,14 +199,14 @@ Static Function ViewDef()
 	oView:AddField( 'VIEW_ZB5', oStructZB5, 'EXERC04_ZB5' )
 
     //Adiciona um titulo para o formulário
-	oView:EnableTitleView( 'VIEW_ZB5' ,STR0002 ) // "Dados da Etapa"
+	oView:EnableTitleView( 'VIEW_ZB5' ,"Cabeçalho" )
 
     //Adiciona no nosso View um controle do tipo FormGrid(antiga newgetdados)
 	oView:AddGrid( 'VIEW_ZB6', oStructZB6, 'EXERC04_ZB6' )
 	oView:AddGrid( 'VIEW_ZB7', oStructZB7, 'EXERC04_ZB7' )
 
-	oView:EnableTitleView( 'VIEW_ZB6' ,"Alunos" ) // "Dados da Etapa"
-	oView:EnableTitleView( 'VIEW_ZB7' ,"Notas" ) // "Dados da Etapa"
+	oView:EnableTitleView( 'VIEW_ZB6' ,"Alunos" )
+	oView:EnableTitleView( 'VIEW_ZB7' ,"Notas" )
 
 	oView:CreateHorizontalBox( 'CORPO'  	, 20 )
 	oView:CreateHorizontalBox( 'RODAPE1'  	, 40 )
@@ -235,8 +235,6 @@ Da Valor para os campos que devem ser iguais
 Function EXERC04INI()
 
 	Local oModel	:= FWModelActive() //Ativa o ultimo modelo aberto.
-	Local oGridZB6 	:= oModel:GetModel( 'EXERC04_ZB6' )
-	Local oGridZB7 	:= oModel:GetModel( 'EXERC04_ZB7' )
 	Local nReturn 	:= ""
 	// Campo a ser validado
 	Local cCampo := ReadVar()
@@ -266,8 +264,8 @@ Function EXERC04VLD()
 	Local oGridZB6 	:= oModel:GetModel( 'EXERC04_ZB6' )
 	Local oGridZB7 	:= oModel:GetModel( 'EXERC04_ZB7' )
 	Local cZB5CodT	:= oModel:GetValue("EXERC04_ZB5", "ZB5_CODTUR")
-	Local cZB6CodT	:= oModel:GetValue("EXERC04_ZB6", "ZB6_CODTUR")
-	Local cZB6RA	:= oModel:GetValue("EXERC04_ZB6", "ZB6_RA")
+	Local cZB6CodT	:= oGridZB6:GetValue( "ZB6_CODTUR" )
+	Local cZB6RA	:= oGridZB6:GetValue( "ZB6_RA" )
 	Local nLenGri6 	:= oGridZB6:Length() 	//Total de linhas zb6
 	Local nLinAtu6 	:= oGridZB6:GetLine() 	//Linha posicionada zb6
 	Local nLenGri7 	:= oGridZB7:Length() 	//Total de linhas zb7
@@ -275,6 +273,7 @@ Function EXERC04VLD()
 	Local cCampo 	:= ReadVar() 			//Campo a ser validado
 	Local cValCamp	:= "" 					//Valor do campo RA
 	Local cSomCam	:= "" 					//Soma dos campos como indice
+	Local cNomeB6	:= Posicione("ZB2", 1, xFilial("ZB2") + oGridZB6:GetValue( "ZB6_RA" ), "ZB2_NOME") //pega valor do nome na ZB2
 	Local nX		:= 1
 
 	If 'ZB6_RA' $ cCampo
@@ -294,7 +293,8 @@ Function EXERC04VLD()
 			EndIf
 		Next nX
 
-		oGridZB6:LoadValue("ZB6_NOME"	, ZB2->ZB2_NOME)
+		oGridZB6:GoLine(nLinAtu6)
+		oGridZB6:LoadValue("ZB6_NOME", cNomeB6) // Carrega o nome do aluno para o campo
 
 	ElseIf 'ZB6_CODTUR' $ cCampo
 
@@ -369,14 +369,14 @@ Static Function fSetActv(oModel)
 Return
 
 //-------------------------------------------------------------------
-/*/{Protheus.doc} fAlerCon
+/*/{Protheus.doc} AlertCon
 Monta Mensagem para exibir a contagem de linhas ZB6 e Zb7
 @author  Vitor Bonet
 @since   27/03/2018
 @version p12
 /*/
 //-------------------------------------------------------------------
-Static Function fAlerCon(cOper, nCodTur, nRA)
+Function AlertCon(cOper, nCodTur, nRA)
 
 	Local cQuery 	:= ""
 	Local cAliasQry := ""
@@ -423,10 +423,8 @@ Function E04PreVl( cGrid )
 
 	Local lValid 		:= .T.
 	Local oModel		:= FWModelActive() //Ativa o ultimo modelo aberto.
-	Local oGridZB6 		:= oModel:GetModel( 'EXERC04_ZB6' )
-	Local oGridZB7 		:= oModel:GetModel( 'EXERC04_ZB7' )
-	Local cZB6CodTur 	:= oGridZB6:GetValue("ZB6_CODTUR")
-	Local cZB6Ra 		:= oGridZB6:GetValue("ZB6_RA")
+	Local cZB6CodTur 	:= oModel:GetValue('EXERC04_ZB6',"ZB6_CODTUR")
+	Local cZB6Ra 		:= oModel:GetValue('EXERC04_ZB6',"ZB6_RA")
 
 	If cGrid == 'Grid_ZB6'
 
